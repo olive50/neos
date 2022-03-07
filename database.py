@@ -44,15 +44,20 @@ class NEODatabase:
 
         # TODO: What additional auxiliary data structures will be useful?
 
-        self.neos_by_designation= {(neo.designation, neo) for neo in self._neos}
-        self.neos_by_name = {(neo.name, neo) for neo in self._neos}
+        self.neos_by_designation= dict()
+        self.neos_by_name = dict()
 
         # TODO: Link together the NEOs and their close approaches.
 
-        for a in self._approaches:
-            neo = self.neos_by_designation[a._designation]
-            a.neo = neo
-            neo.append(a)
+        for neo in self._neos:
+            self.neos_by_designation[neo.designation] = neo
+
+            if neo.name:
+                self.neos_by_name[neo.name] = neo
+        for approach in self._approaches:
+            neo = self.neos_by_designation[approach._designation]
+            approach.neo = neo
+            neo.approaches.append(approach)
 
 
     def get_neo_by_designation(self, designation):
@@ -109,5 +114,14 @@ class NEODatabase:
         :return: A stream of matching `CloseApproach` objects.
         """
         # TODO: Generate `CloseApproach` objects that match all of the filters.
+        
         for approach in self._approaches:
-            yield approach
+            result = [filter(approach) for filter in filters]
+            if(len(result) > 1):
+                if(all(result)):
+                    yield approach
+            elif(len(result) == 1):
+                if(result[0]):
+                    yield approach
+            else:
+                yield approach

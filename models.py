@@ -45,29 +45,25 @@ class NearEarthObject:
         # handle any edge cases, such as a empty name being represented by `None`
         # and a missing diameter being represented by `float('nan')`.
         self.designation = str (info.get("pdes", None))
-        self.name = str (info.get("name", None))
-        given_diam = str (info.get("diameter", "nan"))
-        if len(given_diam) != 0:
-            try:
-                self.diameter = float(given_diam)
-            except ValueError:
-                print(f"Diameter type not suitable")
-        else:
-            self.diameter = float('nan')
-        
 
-        if info.get("pha", "N") in ["Y", "y", "yes","Yes", "ok"]:
-                        self.hazardous = True
-        self.hazardous = False
+        given_name = info.get('name', None)
+        given_diameter = info.get('diameter', 'nan')
 
-        # Create an empty initial collection of linked approaches.
+        if given_name == "":
+            given_name = None
+        if given_diameter == "":
+            given_diameter = 'nan'
+
+        self.name = given_name
+        self.diameter = float(given_diameter)
+        self.hazardous = (info.get('pha', False) == 'Y') or (info.get('pha', False) == 'y')
         self.approaches = []
 
     @property
     def fullname(self):
         """Return a representation of the full name of this NEO."""
         # TODO: Use self.designation and self.name to build a fullname for this object.
-        return f"{self.designation} {self.name}"
+        return f"{self.designation} ({self.name})"
 
     def __str__(self):
         """Return `str(self)`."""
@@ -83,6 +79,15 @@ class NearEarthObject:
         return f"NearEarthObject(designation={self.designation!r}, name={self.name!r}, " \
                f"diameter={self.diameter:.3f}, hazardous={self.hazardous!r})"
 
+    def serialize(self):
+        """Serialize an neo object.
+
+        :return: serialized neo object
+        """
+        return {"designation": self.designation,
+                "name": self.name,
+                "diameter_km": self.diameter,
+                "potentially_hazardous": self.hazardous}
 
 class CloseApproach:
     """A close approach to Earth by an NEO.
@@ -139,10 +144,14 @@ class CloseApproach:
         # TODO: Use this object's attributes to return a human-readable string representation.
         # The project instructions include one possibility. Peek at the __repr__
         # method for examples of advanced string formatting.
-        return f"On {self.time_str}, A NEO named {self._designation} approaches our globe (Earth)\
-             at a distance  {self.distance} and with velocity of {self.velocity} km/s"
+        return f"On {self.time_str}, '{self._designation}' approaches Earth\
+             at a distance {format(self.distance , '.2f')} au and a velocity of {format(self.velocity , '.2f')} km/s."
 
     def __repr__(self):
         """Return `repr(self)`, a computer-readable string representation of this object."""
         return f"CloseApproach(time={self.time_str!r}, distance={self.distance:.2f}, " \
                f"velocity={self.velocity:.2f}, neo={self.neo!r})"
+    def serialize (self):
+        return {'datetime_utc': self.time_str, 'distance_au': self.distance,'velocity_km_s': self.velocity,
+                'neo': {'designation': self.neo.designation, 'name': self.neo.name,'diameter_km': self.neo.diameter,
+                        'potentially_hazardous': self.neo.hazardous}}

@@ -14,6 +14,7 @@ import csv
 import json
 
 
+
 def write_to_csv(results, filename):
     """Write an iterable of `CloseApproach` objects to a CSV file.
 
@@ -30,6 +31,20 @@ def write_to_csv(results, filename):
     )
     # TODO: Write the results to a CSV file, following the specification in the instructions.
 
+    with open(filename, 'w') as csv_output:
+        csv_writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
+        csv_writer.writeheader()
+
+        for ca in results:
+            csv_writer.writerow({
+                'datetime_utc': ca.time,
+                'distance_au': ca.distance,
+                'velocity_km_s': ca.velocity,
+                'designation': ca._designation,
+                'name': ca.neo.name,
+                'diameter_km': ca.neo.diameter,
+                'potentially_hazardous': str(ca.neo.hazardous)})
+
 
 def write_to_json(results, filename):
     """Write an iterable of `CloseApproach` objects to a JSON file.
@@ -43,3 +58,7 @@ def write_to_json(results, filename):
     :param filename: A Path-like object pointing to where the data should be saved.
     """
     # TODO: Write the results to a JSON file, following the specification in the instructions.
+
+    outputs = [item.serialize() for item in results]
+    with open(filename, 'w') as json_file:
+        json.dump(outputs, json_file, indent=4)
